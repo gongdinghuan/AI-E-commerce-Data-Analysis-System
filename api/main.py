@@ -1,10 +1,9 @@
 """
 FastAPI 服务 - REST API 接口
 
-提供:
-- 数据查询API
-- AI分析API
-- 健康检查
+@Author: gongdinghuan
+@Date: 2026-01-29
+@Description: 提供数据查询API、AI分析API、健康检查
 """
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware

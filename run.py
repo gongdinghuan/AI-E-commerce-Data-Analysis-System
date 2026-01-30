@@ -1,5 +1,9 @@
 """
 AI 电商数据分析系统 - 启动脚本
+
+@Author: gongdinghuan
+@Date: 2026-01-29
+@Description: 项目启动脚本，支持dashboard、api或both模式
 """
 import subprocess
 import sys

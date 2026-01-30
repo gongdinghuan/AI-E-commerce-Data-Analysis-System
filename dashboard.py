@@ -1,7 +1,9 @@
 """
 Jarvis 电商数据中控 - Streamlit Dashboard
 
-钢铁侠风格的数据可视化大屏
+@Author: gongdinghuan
+@Date: 2026-01-29
+@Description: 钢铁侠风格的数据可视化大屏
 """
 import streamlit as st
 import pandas as pd
@@ -329,11 +331,24 @@ def render_sales_trend_chart(forecast_data: pd.DataFrame):
     
     # 添加分界线
     if len(actual) > 0 and len(forecast) > 0:
-        fig.add_vline(
-            x=actual['date'].iloc[-1],
-            line_dash="dot",
-            line_color=colors['text'],
-            annotation_text="预测起点"
+        last_date = actual['date'].iloc[-1]
+        fig.add_shape(
+            type="line",
+            x0=last_date,
+            y0=0,
+            x1=last_date,
+            y1=1,
+            yref="paper",
+            line=dict(color=colors['text'], width=2, dash="dot")
+        )
+        fig.add_annotation(
+            x=last_date,
+            y=1,
+            yref="paper",
+            text="预测起点",
+            showarrow=False,
+            yshift=10,
+            font=dict(color=colors['text'])
         )
     
     fig.update_layout(
@@ -460,11 +475,11 @@ def main():
         st.markdown("---")
         
         # 操作按钮
-        if st.button("🔄 刷新数据", use_container_width=True):
+        if st.button("🔄 刷新数据", width='stretch'):
             st.cache_data.clear()
             st.rerun()
         
-        if st.button("📥 重新生成数据", use_container_width=True):
+        if st.button("📥 重新生成数据", width='stretch'):
             generate_data()
             st.cache_data.clear()
             st.rerun()
@@ -508,13 +523,13 @@ def main():
         st.markdown("### 🤖 AI 用户分层 (RFM Clustering)")
         rfm_data, rfm_summary = analyzer.perform_rfm_clustering()
         fig_rfm = render_rfm_3d_chart(rfm_data)
-        st.plotly_chart(fig_rfm, use_container_width=True)
+        st.plotly_chart(fig_rfm, width='stretch')
     
     with col2:
         st.markdown("### 📊 转化漏斗")
         funnel_data = analyzer.get_funnel_analysis()
         fig_funnel = render_funnel_chart(funnel_data)
-        st.plotly_chart(fig_funnel, use_container_width=True)
+        st.plotly_chart(fig_funnel, width='stretch')
         
         # RFM 策略建议
         st.markdown("#### 💡 运营策略")
@@ -532,18 +547,18 @@ def main():
         st.markdown("### 📈 销售趋势与预测")
         forecast_data = analyzer.forecast_sales(7)
         fig_trend = render_sales_trend_chart(forecast_data)
-        st.plotly_chart(fig_trend, use_container_width=True)
+        st.plotly_chart(fig_trend, width='stretch')
     
     with col2:
         tab1, tab2 = st.tabs(["🏷️ 品类分布", "📢 渠道分布"])
         
         with tab1:
             fig_category = render_category_chart(filtered_df)
-            st.plotly_chart(fig_category, use_container_width=True)
+            st.plotly_chart(fig_category, width='stretch')
         
         with tab2:
             fig_channel = render_channel_chart(filtered_df)
-            st.plotly_chart(fig_channel, use_container_width=True)
+            st.plotly_chart(fig_channel, width='stretch')
     
     st.divider()
     
@@ -566,7 +581,7 @@ def main():
     
     for i, q in enumerate(quick_questions):
         with cols[i]:
-            if st.button(q[:10] + "...", key=f"quick_{i}", use_container_width=True):
+            if st.button(q[:10] + "...", key=f"quick_{i}", width='stretch'):
                 st.session_state['user_question'] = q
     
     # 用户输入
@@ -595,7 +610,7 @@ def main():
             if result.get('data') is not None and len(result['data']) > 0:
                 st.dataframe(
                     result['data'],
-                    use_container_width=True,
+                    width='stretch',
                     height=min(400, len(result['data']) * 35 + 38)
                 )
             
@@ -615,19 +630,19 @@ def main():
     
     with tab1:
         top_users = analyzer.get_top_users(10)
-        st.dataframe(top_users, use_container_width=True)
+        st.dataframe(top_users, width='stretch')
     
     with tab2:
         top_products = analyzer.get_top_products(10)
         if len(top_products) > 0:
-            st.dataframe(top_products, use_container_width=True)
+            st.dataframe(top_products, width='stretch')
         else:
             st.info("暂无商品数据")
     
     with tab3:
         st.dataframe(
             filtered_df.head(100),
-            use_container_width=True,
+            width='stretch',
             height=400
         )
     
