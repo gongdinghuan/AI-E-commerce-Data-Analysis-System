@@ -474,6 +474,67 @@ def main():
         
         st.markdown("---")
         
+        # 数据导入功能
+        with st.expander("📥 导入数据", expanded=False):
+            import_type = st.radio(
+                "选择导入类型",
+                ["订单数据", "用户数据", "商品数据"],
+                horizontal=True
+            )
+            
+            uploaded_file = st.file_uploader(
+                "上传CSV文件",
+                type=['csv'],
+                key=f"upload_{import_type}"
+            )
+            
+            if uploaded_file is not None:
+                with st.spinner("正在导入数据..."):
+                    # 保存上传的文件
+                    temp_path = DATA_DIR / f"temp_{uploaded_file.name}"
+                    with open(temp_path, 'wb') as f:
+                        f.write(uploaded_file.getbuffer())
+                    
+                    # 根据类型导入
+                    dm = get_data_manager()
+                    
+                    if import_type == "订单数据":
+                        result = dm.import_orders_from_csv(str(temp_path))
+                    elif import_type == "用户数据":
+                        result = dm.import_users_from_csv(str(temp_path))
+                    else:
+                        result = dm.import_products_from_csv(str(temp_path))
+                    
+                    # 删除临时文件
+                    if temp_path.exists():
+                        temp_path.unlink()
+                    
+                    # 显示结果
+                    if result['success']:
+                        st.success(f"✅ {result['message']}")
+                        st.info(f"导入数量: {result['imported_count']} 条")
+                        # 清除缓存并刷新
+                        st.cache_data.clear()
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {result['message']}")
+                        if result['errors']:
+                            with st.expander("错误详情"):
+                                for error in result['errors']:
+                                    st.text(error)
+            
+            st.markdown("""
+            **CSV文件格式要求:**
+            
+            - **订单数据**: 必需字段 `order_id`, `user_id`, `product_id`, `quantity`, `order_date`, `status`, `price`
+            - **用户数据**: 必需字段 `user_id`
+            - **商品数据**: 必需字段 `product_id`, `price`
+            
+            其他字段为可选，系统会自动填充默认值。
+            """)
+        
+        st.markdown("---")
+        
         # 操作按钮
         if st.button("🔄 刷新数据", width='stretch'):
             st.cache_data.clear()
