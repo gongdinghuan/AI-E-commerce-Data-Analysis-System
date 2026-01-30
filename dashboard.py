@@ -683,7 +683,98 @@ def main():
     st.divider()
     
     # ==========================================
-    # 第四部分：数据表格
+    # 第四部分：SQL查询
+    # ==========================================
+    st.markdown("### 🔍 自定义SQL查询")
+    st.caption("直接编写SQL语句查询数据")
+    
+    # 初始化session state
+    if 'selected_sql' not in st.session_state:
+        st.session_state.selected_sql = ""
+    
+    # 快捷SQL示例
+    with st.expander("📚 常用SQL示例", expanded=False):
+        sql_examples = {
+            "查询最近10条订单": "SELECT * FROM orders ORDER BY order_date DESC LIMIT 10",
+            "查询各城市订单数": "SELECT city, COUNT(*) as order_count FROM orders GROUP BY city ORDER BY order_count DESC",
+            "查询各品类销售额": "SELECT category, SUM(amount) as total_sales FROM orders GROUP BY category ORDER BY total_sales DESC",
+            "查询高价值订单": "SELECT * FROM orders WHERE amount > 5000 ORDER BY amount DESC LIMIT 10",
+            "查询用户消费排行": "SELECT user_id, SUM(amount) as total_spend FROM orders GROUP BY user_id ORDER BY total_spend DESC LIMIT 10",
+            "查询各渠道转化率": "SELECT channel, COUNT(*) as orders, SUM(amount) as revenue FROM orders GROUP BY channel",
+            "查询退货订单": "SELECT * FROM orders WHERE status='已退款' ORDER BY order_date DESC LIMIT 10",
+            "查询平均客单价": "SELECT AVG(amount) as avg_order_value FROM orders WHERE status='已完成'",
+            "查询每日销售趋势": "SELECT DATE(order_date) as date, COUNT(*) as orders, SUM(amount) as gmv FROM orders GROUP BY DATE(order_date) ORDER BY date DESC LIMIT 7",
+            "查询商品评分分布": "SELECT rating, COUNT(*) as count FROM products GROUP BY rating ORDER BY rating DESC",
+        }
+        
+        for desc, sql in sql_examples.items():
+            if st.button(desc, key=f"sql_example_{desc}", width='stretch'):
+                st.session_state.selected_sql = sql
+                st.rerun()
+    
+    # SQL输入区域
+    sql_input = st.text_area(
+        "输入SQL查询语句",
+        value=st.session_state.selected_sql,
+        placeholder="SELECT * FROM orders WHERE status='已完成' LIMIT 10",
+        height=100,
+        key="sql_input"
+    )
+    
+    # 清除选中的SQL（避免重复）
+    if st.session_state.selected_sql:
+        st.session_state.selected_sql = ""
+    
+    # 执行SQL按钮
+    col1, col2 = st.columns([1, 5])
+    with col1:
+        execute_sql = st.button("▶️ 执行查询", type="primary", width='stretch')
+    
+    # 显示查询结果
+    if execute_sql and sql_input.strip():
+        try:
+            with st.spinner("⏳ 执行查询中..."):
+                dm = get_data_manager()
+                result = dm.query(sql_input.strip())
+            
+            st.success(f"✅ 查询成功，共 {len(result)} 条结果")
+            
+            # 显示结果表格
+            st.dataframe(
+                result,
+                width='stretch',
+                height=min(500, len(result) * 35 + 38)
+            )
+            
+            # 显示查询统计
+            with st.expander("📊 查询统计", expanded=False):
+                st.write(f"返回行数: {len(result)}")
+                st.write(f"列数: {len(result.columns)}")
+                st.write(f"列名: {', '.join(result.columns.tolist())}")
+                
+                if len(result) > 0:
+                    st.write("\n数据类型:")
+                    for col in result.columns:
+                        st.write(f"  - {col}: {result[col].dtype}")
+            
+            # 导出结果
+            if st.button("📥 导出查询结果为CSV", key="export_sql_result"):
+                csv = result.to_csv(index=False, encoding='utf-8-sig')
+                st.download_button(
+                    label="下载CSV",
+                    data=csv,
+                    file_name=f"sql_query_result_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv"
+                )
+        
+        except Exception as e:
+            st.error(f"❌ 查询失败: {str(e)}")
+            st.info("💡 请检查SQL语法是否正确，确保只使用SELECT查询")
+    
+    st.divider()
+    
+    # ==========================================
+    # 第五部分：数据表格
     # ==========================================
     st.markdown("### 📋 详细数据")
     
